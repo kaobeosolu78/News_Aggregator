@@ -1,5 +1,6 @@
 # News_Aggregator
 ![](images/Example.png)
+
 This is a desktop application with the purpose of aggregating news from a variety of sources into one easy to use platform. As long as a human it is reported by humans there is no such thing as news without bias, so my goal in creating this project is to gather many different perspectives on current events in an attempt to present the news with as little bias as possible. 
 
 Future Goals:
@@ -8,9 +9,9 @@ Future Goals:
 
 Currently Being Implemented:
 * Unit tests
-* "Add new outlet" backend
-* Save all headlines in a file for future historical analysis
-* 
+* Finish "Add new outlet" backend
+* Create an object to store all past and future headlines for future historical analysis
+* Add support for social media
 
 Major Frameworks: 
 1. PyQt5
