@@ -6,7 +6,6 @@ import datetime
 import time
 import sys
 import pickle
-import copy
 import math
 
 # loads pickeled objects
