@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QMainWindow, QGridLayout, QLabel, QApplication, QWidget, QComboBox, QPushButton, QLineEdit, QAction, QDialog, QErrorMessage
-from PyQt5 import QtCore
+from PyQt5.QtWidgets import QMainWindow, QGridLayout, QLabel, QApplication, QWidget, QPushButton, QLineEdit, QAction, QCalendarWidget
+from PyQt5 import QtCore, QtGui
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import datetime
@@ -7,6 +7,7 @@ import time
 import sys
 import pickle
 import math
+
 
 # loads pickeled objects
 def load_obj(datatype):
@@ -37,15 +38,22 @@ def get_news(news_outlet_data):
     # list: of news outlets
     # datetime.datetime: date and time of last update
     headlines = {}
+    all_headlines = load_obj("All Headlines")
     driver = configure_driver()
+    @pickle_output("All Headlines")
+    def update_all_headlines():
+        all_headlines[datetime.datetime.today()] = headlines
+        return all_headlines
     for (news_name, (site, attr_name, class_name)) in zip(list(news_outlet_data.keys()), list(news_outlet_data.values())):
         driver.get(site)
         time.sleep(1)
+        print(news_name)
         content = getattr(driver, attr_name)(class_name)
         for headline_temp in content:
             if headline_temp.text != "":
                 headlines[news_name] = (headline_temp.text, get_href(headline_temp))
                 break
+    update_all_headlines()
     return (headlines, list(news_outlet_data.keys()), datetime.datetime.today())
 
 
@@ -80,7 +88,7 @@ def get_href(headline, path=".//*", backtrace=1):
 
 
 # used to reduce code repitition
-class Main_Window(QMainWindow):
+class MainWindow(QMainWindow):
     # initializes layout
     def __init__(self):
         super().__init__()
@@ -97,7 +105,7 @@ class Main_Window(QMainWindow):
 
 
 # a window for getting information from the user which is used to add a new news outlet
-class AddNewsOutlet(Main_Window):
+class AddNewsOutlet(MainWindow):
     # input - from user
     # str: four strings that are all outputted
 
@@ -140,20 +148,63 @@ class AddNewsOutlet(Main_Window):
         self.Main_Gui.new_out = {key: val.text() for key, val in zip(list(self.entries.keys()), list(self.entries.values()))}
 
 
-# main project gui window
-class NewsGUI(Main_Window):
-
+class HistoricalNews(MainWindow):
     def __init__(self):
         super().__init__()
 
+        self.history = load_obj("All Headlines")
+
+        self.add_calendar()
+        self.test()
+        # self.add_labels()
+        self.finish("History")
+
+    def add_calendar(self):
+        self.calendar = QCalendarWidget(self)
+
+        self.grid.addWidget(self.calendar, 0, 0)
+        self.calendar.clicked[QtCore.QDate].connect(self.date_search)
+
+
+    def test(self):
+        format = QtGui.QTextCharFormat()
+        format.setFont(QtGui.QFont('Times', 15))
+        [self.calendar.setDateTextFormat(QtCore.QDate(date.year, date.month, date.day), format)
+         for date in list(self.history.keys())]
+
+    def date_search(self, date):
+        selected_date = datetime.datetime.strptime(date.toString(), "%a. %b. %d %Y")
+        # if str(date.date) in [str(news_date.date()) for news_date in list(self.history.keys())]:
+
+        for news_date, news_info in list(self.history.items()):
+            if str(news_date.date()) == str(selected_date.date()):
+                NewsGUI((news_info, list(news_info.keys()), news_date))
+                # selected_date = (news_date, news_info)
+                # break
+            print(date)
+
+    def add_labels(self):
+        for ind, query in enumerate(list(self.history.keys())):
+            self.grid.addWidget(QLabel(f"{query}"), ind, 0)
+
+    def selection(self):
+        pass
+
+
+# main project gui window
+class NewsGUI(MainWindow):
+
+    def __init__(self, current_news=load_obj("headlines")):
+        super().__init__()
+
         # initialize gui variables
-        self.headlines, self.news_outlets, self.datetime = load_obj("headlines")
+        self.headlines, self.news_outlets, self.datetime = current_news  # replace news_out with list(headlines.keys())
         self.labels = {(row, col): QLabel() for col in range(3) for row in range(math.ceil(len(self.news_outlets)/3))}
 
         # initialize gui features
         self.add_buttons(self.add_labels())
         self.add_menus()
-        self.finish("News Aggregator")
+        self.finish(f"News for {self.datetime.date()}")
 
     # adds news headlines to gui
     def add_labels(self):
@@ -181,13 +232,17 @@ class NewsGUI(Main_Window):
         menubar = self.menuBar()
         filemenu = menubar.addMenu("File")
 
+        # history = QAction("View History", self)
+        # history.triggered.connect(lambda: self.history())
+        # filemenu.addAction(history)
+
         new = QAction("New Outlet", self)
         new.triggered.connect(lambda: self.new_outlet())
         filemenu.addAction(new)
 
-        date = QAction("Most Recent Update", self)
-        date.triggered.connect(lambda: self.get_up_date())
-        filemenu.addAction(date)
+    def history(self):
+        self.close()
+        HistoricalNews()
 
     def new_outlet(self):
         add_new = AddNewsOutlet(self)
@@ -201,6 +256,7 @@ class NewsGUI(Main_Window):
 
 def main():
     app = QApplication(sys.argv)
+    # a = HistoricalNews()
     a = NewsGUI()
     sys.exit(app.exec_())
 
