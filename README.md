@@ -1,7 +1,7 @@
 # News_Aggregator
 ![](images/Example.png)
 
-This is a desktop application with the purpose of aggregating news from a variety of sources into one easy to use platform. As long as a human it is reported by humans there is no such thing as news without bias, so my goal in creating this project is to gather many different perspectives on current events in an attempt to present the news with as little bias as possible. 
+This is a desktop application with the purpose of aggregating news from a variety of sources into one easy to use platform. As long as the news is reported by humans it will never be reported without bias, so my goal in creating this project is to gather many different perspectives on current events in an attempt to present the news as clearly as possible. 
 
 Future Goals:
 * Possible implementation in a larger project:(attempt at correlating the sentiment of major headlines with stock prices)
